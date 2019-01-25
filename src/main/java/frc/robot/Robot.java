@@ -7,17 +7,9 @@
 
 package frc.robot;
 
-import org.opencv.core.Rect;
-import org.opencv.imgproc.Imgproc;
-
-import edu.wpi.cscore.UsbCamera;
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.vision.VisionRunner;
-import edu.wpi.first.vision.VisionThread;
-import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -27,14 +19,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * project.
  */
 public class Robot extends TimedRobot {
-  private static final int IMG_WIDTH = 320;
-  private static final int IMG_HEIGHT = 240;
+  Joystick joystick = new Joystick(0);
 
-  private VisionThread visionThread;
-  private double centerX = 0.0;
-  private DifferentialDrive drive;
-
-  private final Object imgLock = new Object();
+  Solenoid s0 = new Solenoid(0);
+  Solenoid s1 = new Solenoid(1);
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -42,13 +30,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
-    camera.setResolution(IMG_WIDTH, IMG_HEIGHT);
-    visionThread = new VisionThread(camera, new GripPipeline(), new VisionListener());
 
-    visionThread.start();
-
-    drive = new DifferentialDrive(new Talon(0), new Talon(1));
   }
 
   /**
@@ -85,24 +67,26 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-    double centerX; // most recent center of the 1st contour found by vision processing
-    synchronized (imgLock) {
-      centerX = this.centerX;
-    }
-    double turn = centerX - (IMG_WIDTH / 2);
-    SmartDashboard.putNumber("turn", turn);
-    if (turn < 5 && turn > -5) {
-      drive.tankDrive(turn * 0.005, turn * -.005);
-    }else{
-      drive.tankDrive(0, 0);
-    }
+
   }
 
   /**
    * This function is called periodically during operator control.
    */
+
   @Override
   public void teleopPeriodic() {
+    if (joystick.getPOV() == 0) {
+      s0.set(true);
+    } else {
+      s0.set(false);
+    }
+
+    if (joystick.getPOV() == 180) {
+      s1.set(true);
+    } else {
+      s1.set(false);
+    }
   }
 
   /**
@@ -110,18 +94,5 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void testPeriodic() {
-  }
-
-  public class VisionListener implements VisionRunner.Listener<GripPipeline> {
-
-    @Override
-    public void copyPipelineOutputs(GripPipeline pipeline) {
-      if (!pipeline.filterContoursOutput().isEmpty()) {
-        Rect r = Imgproc.boundingRect(pipeline.filterContoursOutput().get(0));
-        synchronized (imgLock) {
-          centerX = r.x + (r.width / 2);
-        }
-      }
-    }
   }
 }
