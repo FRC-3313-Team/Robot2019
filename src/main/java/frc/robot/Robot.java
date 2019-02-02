@@ -14,7 +14,6 @@ import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
@@ -29,12 +28,20 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
  * project.
  */
 public class Robot extends TimedRobot {
+  // Default configuration values
+  private static final double DEFAULT_TURN_MULTIPLIER = .5;
+  private static final double DEFAULT_DRIVE_MULTIPLIER = 1;
+
   Joystick joystick = new Joystick(0);
+  Joystick controller = new Joystick(1);
 
   Compressor compressor = new Compressor(11);
 
-  Solenoid s0 = new Solenoid(11, 0);
-  Solenoid s1 = new Solenoid(11, 1);
+  // Arm Solenoids
+  DualValveSolenoid armSolenoid = new DualValveSolenoid(11, 0, 1);
+
+  // Brake Solenoids
+  DualValveSolenoid brakeSolenoid = new DualValveSolenoid(11, 2, 3);
 
   Talon intakeMotor = new Talon(0);
   Talon tiltMotor = new Talon(1);
@@ -50,6 +57,13 @@ public class Robot extends TimedRobot {
   ShuffleboardTab robotStatusTab = Shuffleboard.getTab("Robot Status");
   NetworkTableEntry pressureSwitchStatus = robotStatusTab.add("Pneumatic Pressure", false)
       .withProperties(Map.of("colorWhenTrue", "green", "colorWhenFalse", "maroon")).getEntry();
+
+  NetworkTableEntry turnSpeedMultiplier = robotStatusTab.add("Turn Speed Multiplier", DEFAULT_TURN_MULTIPLIER)
+      .getEntry();
+  NetworkTableEntry driveSpeedMultiplier = robotStatusTab.add("Drive Speed Multiplier", DEFAULT_DRIVE_MULTIPLIER)
+      .getEntry();
+
+  NetworkTableEntry resolvedDriveMultiplier = robotStatusTab.add("Resolved Drive Speed", 0).getEntry();
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -71,6 +85,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     pressureSwitchStatus.setBoolean(compressor.getPressureSwitchValue());
+    resolvedDriveMultiplier
+        .setDouble(driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER) * (-joystick.getRawAxis(2) + 1));
   }
 
   /**
@@ -103,34 +119,42 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     // Drive control
-    drive.driveCartesian(joystick.getRawAxis(0), -joystick.getRawAxis(1), joystick.getRawAxis(3) * .5);
+    drive.driveCartesian(joystick.getRawAxis(0) * driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER),
+        -joystick.getRawAxis(1) * driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER)
+            * (-joystick.getRawAxis(2) + 1),
+        joystick.getRawAxis(3) * turnSpeedMultiplier.getDouble(DEFAULT_TURN_MULTIPLIER)
+            * (-joystick.getRawAxis(2) + 1));
 
     // Arm Position
-    if (joystick.getRawButton(7)) {
-      s0.set(true);
-      s1.set(false);
-    } else if (joystick.getRawButton(6)) {
-      s1.set(true);
-      s0.set(false);
+    if (joystick.getRawButton(7) || controller.getPOV() == 180) {
+      armSolenoid.set(1);
+    } else if (joystick.getRawButton(6) || controller.getPOV() == 0) {
+      armSolenoid.set(0);
     } else {
-      s0.set(false);
-      s1.set(false);
+      armSolenoid.set(2);
+    }
+
+    // Brake
+    if (controller.getRawAxis(2) > .75 || controller.getRawAxis(3) > .75) { // Start breaking
+      brakeSolenoid.set(1);
+    } else { // Release brake
+      brakeSolenoid.set(0);
     }
 
     // Intake
-    if (joystick.getRawButton(1)) {
+    if (joystick.getRawButton(1) || controller.getRawButton(5)) { // Shoot
       intakeMotor.set(1);
-    } else if (joystick.getRawButton(2)) {
+    } else if (joystick.getRawButton(2) || controller.getRawButton(6)) { // Not Shoot
       intakeMotor.set(-1);
-    } else {
+    } else { // Not Work
       intakeMotor.set(0);
     }
 
     // Tilt
-    if (joystick.getRawButton(9)) {
-      tiltMotor.set(.25);
-    } else if (joystick.getRawButton(10)) {
-      tiltMotor.set(-.25);
+    if (joystick.getRawButton(9) || controller.getRawButton(1)) {
+      tiltMotor.set(.65);
+    } else if (joystick.getRawButton(10) || controller.getRawButton(2)) {
+      tiltMotor.set(-.65);
     } else {
       tiltMotor.set(0);
     }
