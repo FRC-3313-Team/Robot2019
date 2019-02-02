@@ -7,9 +7,19 @@
 
 package frc.robot;
 
+import java.util.Map;
+
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.drive.MecanumDrive;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -21,8 +31,25 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class Robot extends TimedRobot {
   Joystick joystick = new Joystick(0);
 
-  Solenoid s0 = new Solenoid(0);
-  Solenoid s1 = new Solenoid(1);
+  Compressor compressor = new Compressor(11);
+
+  Solenoid s0 = new Solenoid(11, 0);
+  Solenoid s1 = new Solenoid(11, 1);
+
+  Talon intakeMotor = new Talon(0);
+  Talon tiltMotor = new Talon(1);
+
+  WPI_VictorSPX frontLeftMotor = new WPI_VictorSPX(1);
+  WPI_VictorSPX frontRightMotor = new WPI_VictorSPX(2);
+  WPI_VictorSPX backLeftMotor = new WPI_VictorSPX(3);
+  WPI_VictorSPX backRightMotor = new WPI_VictorSPX(4);
+
+  MecanumDrive drive = new MecanumDrive(frontLeftMotor, backLeftMotor, frontRightMotor, backRightMotor);
+
+  // Shuffleboard code
+  ShuffleboardTab robotStatusTab = Shuffleboard.getTab("Robot Status");
+  NetworkTableEntry pressureSwitchStatus = robotStatusTab.add("Pneumatic Pressure", false)
+      .withProperties(Map.of("colorWhenTrue", "green", "colorWhenFalse", "maroon")).getEntry();
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -30,7 +57,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-
   }
 
   /**
@@ -44,6 +70,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    pressureSwitchStatus.setBoolean(compressor.getPressureSwitchValue());
   }
 
   /**
@@ -67,7 +94,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
-
   }
 
   /**
@@ -76,16 +102,37 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    if (joystick.getPOV() == 0) {
+    // Drive control
+    drive.driveCartesian(joystick.getRawAxis(0), -joystick.getRawAxis(1), joystick.getRawAxis(3) * .5);
+
+    // Arm Position
+    if (joystick.getRawButton(7)) {
       s0.set(true);
+      s1.set(false);
+    } else if (joystick.getRawButton(6)) {
+      s1.set(true);
+      s0.set(false);
     } else {
       s0.set(false);
+      s1.set(false);
     }
 
-    if (joystick.getPOV() == 180) {
-      s1.set(true);
+    // Intake
+    if (joystick.getRawButton(1)) {
+      intakeMotor.set(1);
+    } else if (joystick.getRawButton(2)) {
+      intakeMotor.set(-1);
     } else {
-      s1.set(false);
+      intakeMotor.set(0);
+    }
+
+    // Tilt
+    if (joystick.getRawButton(9)) {
+      tiltMotor.set(.25);
+    } else if (joystick.getRawButton(10)) {
+      tiltMotor.set(-.25);
+    } else {
+      tiltMotor.set(0);
     }
   }
 
