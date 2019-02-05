@@ -32,8 +32,8 @@ public class Robot extends TimedRobot {
   private static final double DEFAULT_TURN_MULTIPLIER = .5;
   private static final double DEFAULT_DRIVE_MULTIPLIER = 1;
 
-  Joystick joystick = new Joystick(0);
-  Joystick controller = new Joystick(1);
+  Joystick thrustmaster = new Joystick(0);
+  Joystick logitech = new Joystick(1);
 
   Compressor compressor = new Compressor(11);
 
@@ -86,7 +86,7 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     pressureSwitchStatus.setBoolean(compressor.getPressureSwitchValue());
     resolvedDriveMultiplier
-        .setDouble(driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER) * (-joystick.getRawAxis(2) + 1));
+        .setDouble(driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER) * (-thrustmaster.getRawAxis(2) + 1));
   }
 
   /**
@@ -119,41 +119,41 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     // Drive control
-    drive.driveCartesian(joystick.getRawAxis(0) * driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER),
-        -joystick.getRawAxis(1) * driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER)
-            * (-joystick.getRawAxis(2) + 1),
-        joystick.getRawAxis(3) * turnSpeedMultiplier.getDouble(DEFAULT_TURN_MULTIPLIER)
-            * (-joystick.getRawAxis(2) + 1));
+    drive.driveCartesian(thrustmaster.getRawAxis(0) * driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER),
+        -thrustmaster.getRawAxis(1) * driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER)
+            * (-thrustmaster.getRawAxis(2) + 1),
+        thrustmaster.getRawAxis(3) * turnSpeedMultiplier.getDouble(DEFAULT_TURN_MULTIPLIER)
+            * (-thrustmaster.getRawAxis(2) + 1));
 
     // Arm Position
-    if (joystick.getRawButton(7) || controller.getPOV() == 180) {
+    if (thrustmaster.getRawButton(7) || logitech.getRawButton(6)) {
       armSolenoid.set(1);
-    } else if (joystick.getRawButton(6) || controller.getPOV() == 0) {
+    } else if (thrustmaster.getRawButton(6) || logitech.getRawButton(7)) {
       armSolenoid.set(0);
     } else {
       armSolenoid.set(2);
     }
 
     // Brake
-    if (controller.getRawAxis(2) > .75 || controller.getRawAxis(3) > .75) { // Start breaking
+    if (logitech.getRawAxis(2) > .75 || logitech.getRawButton(8)) { // Start breaking
       brakeSolenoid.set(1);
     } else { // Release brake
       brakeSolenoid.set(0);
     }
 
-    // Intake
-    if (joystick.getRawButton(1) || controller.getRawButton(5)) { // Shoot
+    // Shoot/Intake
+    if (thrustmaster.getRawButton(1) || logitech.getRawButton(1)) { // Shoot
       intakeMotor.set(1);
-    } else if (joystick.getRawButton(2) || controller.getRawButton(6)) { // Not Shoot
+    } else if (thrustmaster.getRawButton(2) || logitech.getRawButton(4) || logitech.getRawButton(5)) { // Intake
       intakeMotor.set(-1);
     } else { // Not Work
       intakeMotor.set(0);
     }
 
     // Tilt
-    if (joystick.getRawButton(9) || controller.getRawButton(1)) {
+    if (thrustmaster.getRawButton(9) || logitech.getRawButton(3)) {
       tiltMotor.set(.65);
-    } else if (joystick.getRawButton(10) || controller.getRawButton(2)) {
+    } else if (thrustmaster.getRawButton(10) || logitech.getRawButton(2)) {
       tiltMotor.set(-.65);
     } else {
       tiltMotor.set(0);
