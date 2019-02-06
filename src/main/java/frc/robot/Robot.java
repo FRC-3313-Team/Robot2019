@@ -55,15 +55,16 @@ public class Robot extends TimedRobot {
 
   // Shuffleboard code
   ShuffleboardTab robotStatusTab = Shuffleboard.getTab("Robot Status");
-  NetworkTableEntry pressureSwitchStatus = robotStatusTab.add("Pneumatic Pressure", false)
-      .withProperties(Map.of("colorWhenTrue", "green", "colorWhenFalse", "maroon")).getEntry();
+  NetworkTableEntry pressureSwitchStatus = robotStatusTab.add("Pneumatic Pressure", false).withPosition(0, 0)
+      .withSize(2, 1).withProperties(Map.of("colorWhenTrue", "green", "colorWhenFalse", "maroon")).getEntry();
 
   NetworkTableEntry turnSpeedMultiplier = robotStatusTab.add("Turn Speed Multiplier", DEFAULT_TURN_MULTIPLIER)
-      .getEntry();
+      .withPosition(4, 0).withSize(2, 1).getEntry();
   NetworkTableEntry driveSpeedMultiplier = robotStatusTab.add("Drive Speed Multiplier", DEFAULT_DRIVE_MULTIPLIER)
-      .getEntry();
+      .withPosition(6, 0).withSize(2, 1).getEntry();
 
-  NetworkTableEntry resolvedDriveMultiplier = robotStatusTab.add("Resolved Drive Speed", 0).getEntry();
+  NetworkTableEntry resolvedDriveMultiplier = robotStatusTab.add("Resolved Drive Speed", 0).withPosition(6, 1)
+      .withSize(2, 1).getEntry();
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -126,9 +127,9 @@ public class Robot extends TimedRobot {
             * (-thrustmaster.getRawAxis(2) + 1));
 
     // Arm Position
-    if (thrustmaster.getRawButton(7) || logitech.getRawButton(6)) {
+    if (thrustmaster.getRawButton(7) || logitech.getRawButton(7)) { // Down
       armSolenoid.set(1);
-    } else if (thrustmaster.getRawButton(6) || logitech.getRawButton(7)) {
+    } else if (thrustmaster.getRawButton(6) || logitech.getRawButton(6)) { // Up
       armSolenoid.set(0);
     } else {
       armSolenoid.set(2);
@@ -143,17 +144,17 @@ public class Robot extends TimedRobot {
 
     // Shoot/Intake
     if (thrustmaster.getRawButton(1) || logitech.getRawButton(1)) { // Shoot
-      intakeMotor.set(1);
+      intakeMotor.set((logitech.getRawAxis(2) + 1) / -2);
     } else if (thrustmaster.getRawButton(2) || logitech.getRawButton(4) || logitech.getRawButton(5)) { // Intake
-      intakeMotor.set(-1);
+      intakeMotor.set((logitech.getRawAxis(2) + 1) / 2);
     } else { // Not Work
       intakeMotor.set(0);
     }
 
     // Tilt
-    if (thrustmaster.getRawButton(9) || logitech.getRawButton(3)) {
+    if (thrustmaster.getRawButton(9) || logitech.getRawButton(2)) {
       tiltMotor.set(.65);
-    } else if (thrustmaster.getRawButton(10) || logitech.getRawButton(2)) {
+    } else if (thrustmaster.getRawButton(10) || logitech.getRawButton(3)) {
       tiltMotor.set(-.65);
     } else {
       tiltMotor.set(0);
