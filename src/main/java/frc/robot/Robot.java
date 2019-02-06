@@ -136,7 +136,7 @@ public class Robot extends TimedRobot {
     }
 
     // Brake
-    if (logitech.getRawAxis(2) > .75 || logitech.getRawButton(8)) { // Start breaking
+    if (logitech.getRawButton(8)) { // Start breaking
       brakeSolenoid.set(1);
     } else { // Release brake
       brakeSolenoid.set(0);
@@ -144,9 +144,9 @@ public class Robot extends TimedRobot {
 
     // Shoot/Intake
     if (thrustmaster.getRawButton(1) || logitech.getRawButton(1)) { // Shoot
-      intakeMotor.set((logitech.getRawAxis(2) + 1) / -2);
+      intakeMotor.set((-logitech.getRawAxis(2) + 1) / 2);
     } else if (thrustmaster.getRawButton(2) || logitech.getRawButton(4) || logitech.getRawButton(5)) { // Intake
-      intakeMotor.set((logitech.getRawAxis(2) + 1) / 2);
+      intakeMotor.set((-logitech.getRawAxis(2) + 1) / -2);
     } else { // Not Work
       intakeMotor.set(0);
     }
