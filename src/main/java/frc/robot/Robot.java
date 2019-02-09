@@ -11,8 +11,10 @@ import java.util.Map;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -37,12 +39,16 @@ public class Robot extends TimedRobot {
 
   Compressor compressor = new Compressor(11);
 
-  // Arm Solenoids
+  // Arm Solenoid
   DualValveSolenoid armSolenoid = new DualValveSolenoid(11, 0, 1);
 
-  // Brake Solenoids
+  // Brake Solenoid
   DualValveSolenoid brakeSolenoid = new DualValveSolenoid(11, 2, 3);
 
+  // Limit Switches
+  DigitalInput TiltLimit1 = new DigitalInput(0);
+
+  // Motor Controllers
   Talon intakeMotor = new Talon(0);
   Talon tiltMotor = new Talon(1);
 
@@ -58,8 +64,12 @@ public class Robot extends TimedRobot {
   NetworkTableEntry pressureSwitchStatus = robotStatusTab.add("Pneumatic Pressure", false).withPosition(0, 0)
       .withSize(2, 1).withProperties(Map.of("colorWhenTrue", "green", "colorWhenFalse", "maroon")).getEntry();
 
+  NetworkTableEntry tilt1 = robotStatusTab.add("Tilt up", true).withPosition(2, 0).withSize(2, 1)
+      .withProperties(Map.of("colorWhenTrue", "green", "colorWhenFalse", "maroon")).getEntry();
+
   NetworkTableEntry turnSpeedMultiplier = robotStatusTab.add("Turn Speed Multiplier", DEFAULT_TURN_MULTIPLIER)
       .withPosition(4, 0).withSize(2, 1).getEntry();
+
   NetworkTableEntry driveSpeedMultiplier = robotStatusTab.add("Drive Speed Multiplier", DEFAULT_DRIVE_MULTIPLIER)
       .withPosition(6, 0).withSize(2, 1).getEntry();
 
@@ -72,6 +82,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+
+    // Camera
+    CameraServer.getInstance().startAutomaticCapture();
   }
 
   /**
@@ -88,6 +101,7 @@ public class Robot extends TimedRobot {
     pressureSwitchStatus.setBoolean(compressor.getPressureSwitchValue());
     resolvedDriveMultiplier
         .setDouble(driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER) * (-thrustmaster.getRawAxis(2) + 1));
+    tilt1.setBoolean(TiltLimit1.get());
   }
 
   /**
@@ -138,6 +152,7 @@ public class Robot extends TimedRobot {
     // Brake
     if (logitech.getRawButton(8)) { // Start breaking
       brakeSolenoid.set(1);
+      tiltMotor.set(0);
     } else { // Release brake
       brakeSolenoid.set(0);
     }
@@ -154,7 +169,7 @@ public class Robot extends TimedRobot {
     // Tilt
     if (thrustmaster.getRawButton(9) || logitech.getRawButton(2)) {
       tiltMotor.set(.65);
-    } else if (thrustmaster.getRawButton(10) || logitech.getRawButton(3)) {
+    } else if (thrustmaster.getRawButton(10) && TiltLimit1.get() || logitech.getRawButton(3) && TiltLimit1.get()) {
       tiltMotor.set(-.65);
     } else {
       tiltMotor.set(0);
