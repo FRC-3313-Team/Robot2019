@@ -168,9 +168,9 @@ public class Robot extends TimedRobot {
 
     // Tilt
     if (thrustmaster.getRawButton(9) || logitech.getRawButton(2)) {
-      tiltMotor.set(.65);
-    } else if (thrustmaster.getRawButton(10) && tiltLimit1.get() || logitech.getRawButton(3) && tiltLimit1.get()) {
-      tiltMotor.set(-.65);
+      tiltMotor.set(.75);
+    } else if (thrustmaster.getRawButton(10) && !tiltLimit1.get() || logitech.getRawButton(3) && !tiltLimit1.get()) {
+      tiltMotor.set(-.75);
     } else {
       tiltMotor.set(0);
     }
