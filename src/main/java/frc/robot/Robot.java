@@ -46,7 +46,7 @@ public class Robot extends TimedRobot {
   DualValveSolenoid brakeSolenoid = new DualValveSolenoid(11, 2, 3);
 
   // Limit Switches
-  DigitalInput TiltLimit1 = new DigitalInput(0);
+  DigitalInput tiltLimit1 = new DigitalInput(0);
 
   // Motor Controllers
   Talon intakeMotor = new Talon(0);
@@ -101,7 +101,7 @@ public class Robot extends TimedRobot {
     pressureSwitchStatus.setBoolean(compressor.getPressureSwitchValue());
     resolvedDriveMultiplier
         .setDouble(driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER) * (-thrustmaster.getRawAxis(2) + 1));
-    tilt1.setBoolean(TiltLimit1.get());
+    tilt1.setBoolean(tiltLimit1.get());
   }
 
   /**
@@ -162,14 +162,14 @@ public class Robot extends TimedRobot {
       intakeMotor.set((-logitech.getRawAxis(2) + 1) / 2);
     } else if (thrustmaster.getRawButton(2) || logitech.getRawButton(4) || logitech.getRawButton(5)) { // Intake
       intakeMotor.set((-logitech.getRawAxis(2) + 1) / -2);
-    } else { // Not Work
+    } else { // No Movement
       intakeMotor.set(0);
     }
 
     // Tilt
     if (thrustmaster.getRawButton(9) || logitech.getRawButton(2)) {
       tiltMotor.set(.65);
-    } else if (thrustmaster.getRawButton(10) && TiltLimit1.get() || logitech.getRawButton(3) && TiltLimit1.get()) {
+    } else if (thrustmaster.getRawButton(10) && tiltLimit1.get() || logitech.getRawButton(3) && tiltLimit1.get()) {
       tiltMotor.set(-.65);
     } else {
       tiltMotor.set(0);
