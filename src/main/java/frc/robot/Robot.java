@@ -64,7 +64,7 @@ public class Robot extends TimedRobot {
   NetworkTableEntry pressureSwitchStatus = robotStatusTab.add("Pneumatic Pressure", false).withPosition(0, 0)
       .withSize(2, 1).withProperties(Map.of("colorWhenTrue", "green", "colorWhenFalse", "maroon")).getEntry();
 
-  NetworkTableEntry tilt1 = robotStatusTab.add("Tilt up", true).withPosition(2, 0).withSize(2, 1)
+  NetworkTableEntry tilt1Status = robotStatusTab.add("Tilt up", true).withPosition(2, 0).withSize(2, 1)
       .withProperties(Map.of("colorWhenTrue", "green", "colorWhenFalse", "maroon")).getEntry();
 
   NetworkTableEntry turnSpeedMultiplier = robotStatusTab.add("Turn Speed Multiplier", DEFAULT_TURN_MULTIPLIER)
@@ -101,7 +101,7 @@ public class Robot extends TimedRobot {
     pressureSwitchStatus.setBoolean(compressor.getPressureSwitchValue());
     resolvedDriveMultiplier
         .setDouble(driveSpeedMultiplier.getDouble(DEFAULT_DRIVE_MULTIPLIER) * (-thrustmaster.getRawAxis(2) + 1));
-    tilt1.setBoolean(tiltLimit1.get());
+    tilt1Status.setBoolean(tiltLimit1.get());
   }
 
   /**
